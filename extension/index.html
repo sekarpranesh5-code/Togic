@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whistle Voice CRT Phosphor Terminal</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body class="crt-theme">
+  <!-- CRT Screen Glare & Scanline Simulation -->
+  <div class="crt-overlay"></div>
+  <div class="crt-scanline"></div>
+  <div class="crt-flicker"></div>
+
+  <div class="app-wrapper">
+    <!-- CRT Terminal Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="terminal-badge">
+          <span class="blinking-dot"></span>
+          <span class="brand-title">&gt; CACTUS_WHISTLE // CRT_PHOSPHOR_TERMINAL</span>
+        </div>
+        <span class="version-tag">SYSTEM_ROM: v3.2.1 • 16.9MB ENGINE • 20MS ULTRA-LOW LATENCY PIPELINE</span>
+      </div>
+
+      <div class="header-status-group">
+        <div class="server-status" id="serverStatusBadge">
+          <span class="status-indicator online"></span>
+          <span id="statusText">CORE: ONLINE</span>
+        </div>
+        <span class="stat-badge latency-badge" id="latencyStat">⚡ 20 ms</span>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      <!-- Voice Input & CRT Frequency Bar -->
+      <section class="voice-panel">
+        <div class="mic-controls">
+          <button id="mainMicBtn" class="record-btn" title="Toggle Voice Recording">
+            <div class="mic-icon-wrapper">
+              <span class="mic-glyph">◉</span>
+            </div>
+            <div class="btn-text-group">
+              <span class="main-label" id="micMainLabel">[START RECORDING]</span>
+              <span class="sub-label" id="micSubLabel">Click to speak & dict</span>
+            </div>
+          </button>
+
+          <div class="language-picker">
+            <label for="langSelect">LANG:</label>
+            <select id="langSelect" class="cyber-select-small">
+              <option value="en-US">EN (English)</option>
+              <option value="es-ES">ES (Spanish)</option>
+              <option value="fr-FR">FR (French)</option>
+              <option value="de-DE">DE (German)</option>
+              <option value="it-IT">IT (Italian)</option>
+              <option value="nl-NL">NL (Dutch)</option>
+              <option value="pl-PL">PL (Polish)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CRT Phosphor Waveform Visualizer -->
+        <div class="visualizer-container">
+          <canvas id="visualizerCanvas" width="540" height="50"></canvas>
+          <div class="visualizer-info" id="liveAudioInfo">&gt; AUDIO IN: READY // ZERO LATENCY STREAMING ACTIVE</div>
+        </div>
+      </section>
+
+      <!-- Pure CRT Phosphor Screen Buffer -->
+      <section class="screen-panel">
+        <div class="screen-header">
+          <div class="screen-title">
+            <span class="screen-label">&gt;&gt; PHOSPHOR BUFFER // DIRECT EDIT &amp; SPEECH CONVERSION</span>
+          </div>
+          <div class="screen-stats">
+            <span class="stat-item" id="wordCount">WORDS: 0</span>
+            <span class="stat-item" id="charCount">CHARS: 0</span>
+          </div>
+        </div>
+
+        <div class="crt-screen-frame">
+          <div class="screen-glass">
+            <!-- Full Interactive Text Area: Speech is converted here, and user can type sentences directly -->
+            <textarea 
+              id="speechTextArea" 
+              class="crt-textarea" 
+              placeholder="&gt; CRT PHOSPHOR READY.&#10;&gt; Speak into microphone or type sentences directly here..."
+              spellcheck="false"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <div class="action-left">
+            <button id="copyBtn" class="cyber-action-btn">
+              [COPY BUFFER]
+            </button>
+            <button id="downloadBtn" class="cyber-action-btn">
+              [SAVE .TXT]
+            </button>
+            <button id="clearBtn" class="cyber-action-btn btn-danger">
+              [CLEAR]
+            </button>
+          </div>
+
+          <div class="action-right">
+            <button id="sampleBtn" class="cyber-action-btn btn-secondary">
+              [TEST SAMPLE]
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-col">
+        <span>DEVICE ARCH: <strong>Cactus Whistle 16.9MB</strong> • CQ2-bit Quantized</span>
+      </div>
+      <div class="footer-col text-right">
+        <span>CRT MONOCHROME PHOSPHOR ACTIVE • 60HZ REFRESH</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

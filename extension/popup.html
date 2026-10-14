@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whistle Voice</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <div class="logo-group">
+        <span class="icon">🎙️</span>
+        <div>
+          <h2 class="title">Whistle Voice</h2>
+          <span class="badge" id="engineBadge">Cactus Engine</span>
+        </div>
+      </div>
+      <button id="openAppBtn" class="btn-icon" title="Open Full Screen Studio">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="mic-section">
+      <button id="micToggleBtn" class="mic-button">
+        <span class="mic-icon">🎙️</span>
+        <span id="micStatusText">Click to Speak</span>
+      </button>
+      <div id="listeningIndicator" class="pulse-indicator hidden">
+        <span class="pulse-ring"></span>
+        <span class="pulse-text">Listening...</span>
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <textarea id="popupTextArea" placeholder="Speak or type sentences here..."></textarea>
+    </div>
+
+    <div class="footer-actions">
+      <button id="copyBtn" class="btn btn-secondary">Copy</button>
+      <button id="clearBtn" class="btn btn-secondary">Clear</button>
+      <button id="launchStudioBtn" class="btn btn-primary">Open Studio (CRT Mode)</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

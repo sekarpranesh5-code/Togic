@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Whistle Voice - Speech to Text",
+  "version": "1.0.0",
+  "description": "On-device Voice to Text speech recognition powered by Cactus Whistle with typing & CRT terminal display.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*"
+  ]
+}

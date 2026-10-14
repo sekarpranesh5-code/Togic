@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Markdown files
+*.md
+**/*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Cloned Hugging Face Repos
+needle3/
+whistle/
+
+# OS and Temp
+.DS_Store
+Thumbs.db
+*.tmp
+*.wav
