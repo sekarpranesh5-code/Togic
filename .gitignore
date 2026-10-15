@@ -5,6 +5,7 @@ package-lock.json
 # Markdown files
 *.md
 **/*.md
+!README.md
 
 # Python
 __pycache__/
