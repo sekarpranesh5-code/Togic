@@ -1,4 +1,4 @@
-# 📟 Togic // Cactus Whistle Voice CRT Terminal
+# 📟 Togic // CRT Phosphor Voice Terminal
 
 > **Ultra-Low Latency Speech-to-Text & Real-Time Dictation Web Studio & Chrome Extension**  
 > Powered by [Cactus Compute Whistle](https://huggingface.co/Cactus-Compute/whistle) (16.9 MB on-device foundation ASR model) inside an authentic **CRT Phosphor Green Terminal** interface.

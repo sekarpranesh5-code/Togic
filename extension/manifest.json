@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Whistle Voice - Speech to Text",
+  "name": "Togic - Speech to Text",
   "version": "1.0.0",
-  "description": "On-device Voice to Text speech recognition powered by Cactus Whistle with typing & CRT terminal display.",
+  "description": "On-device Voice to Text speech recognition with interactive typing & CRT terminal display.",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

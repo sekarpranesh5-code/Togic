@@ -1,8 +1,8 @@
 @echo off
-title Cactus Whistle Voice Website Server
+title Togic Voice Website Server
 echo ========================================================
-echo   Starting Cactus Whistle Voice Website Server
-echo   Model: Cactus-Compute/whistle (16.9 MB)
+echo   Starting Togic Voice Website Server
+echo   Model: Cactus Whistle (16.9 MB Preloaded)
 echo   Website URL: http://localhost:8765/
 echo ========================================================
 start http://localhost:8765/

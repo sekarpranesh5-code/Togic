@@ -141,7 +141,7 @@ def run_server(port=8765):
     server_address = ('0.0.0.0', port)
     httpd = http.server.HTTPServer(server_address, CactusSpeechServer)
     print(f"==================================================")
-    print(f"  CACTUS WHISTLE CRT PHOSPHOR SERVER ONLINE:")
+    print(f"  TOGIC CRT PHOSPHOR SERVER ONLINE:")
     print(f"  --> http://localhost:{port}")
     print(f"==================================================")
     try:
