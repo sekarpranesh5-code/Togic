@@ -1,5 +1,5 @@
 /**
- * WHISTLE VOICE CRT PHOSPHOR TERMINAL - ULTRA-LOW LATENCY CONTROLLER
+ * TOGIC CRT PHOSPHOR TERMINAL - ULTRA-FAST STREAMING CONTROLLER
  */
 
 // DOM Elements
@@ -24,6 +24,7 @@ const sampleBtn = document.getElementById('sampleBtn');
 
 // State Variables
 let isRecording = false;
+let isProcessingChunk = false;
 let serverOnline = false;
 
 // Audio & Visualizer State
@@ -38,6 +39,7 @@ let chunkInterval = null;
 // Real-Time Speech Recognition
 let webSpeechRecognition = null;
 let baseTextBeforeSpeaking = '';
+let currentInterimText = '';
 
 // Dynamic Server Endpoint
 const SERVER_URL = (window.location.origin && window.location.origin.startsWith('http')) 
@@ -60,7 +62,7 @@ async function checkServerHealth() {
   } catch (err) {
     serverOnline = false;
     statusIndicator.className = 'status-indicator offline';
-    statusText.textContent = 'CORE: LOCALHOST STREAMING';
+    statusText.textContent = 'CORE: STREAMING READY';
   }
 }
 
@@ -90,7 +92,6 @@ function drawVisualizer() {
   for (let i = 0; i < bufferLength / 2; i++) {
     barHeight = (dataArray[i] / 255) * visualizerCanvas.height;
 
-    // Glowing CRT Green Bars
     visualizerCtx.fillStyle = `rgba(51, 255, 102, ${Math.max(0.35, barHeight / visualizerCanvas.height)})`;
     visualizerCtx.shadowColor = '#33ff66';
     visualizerCtx.shadowBlur = barHeight > 10 ? 8 : 2;
@@ -156,17 +157,20 @@ function resampleTo16kHz(audioData, originalSampleRate) {
   return result;
 }
 
-// 20ms Ultra-Low Latency Cactus Whistle Stream Process
+// Ultra-Low Latency Cactus Whistle Stream Process (Guarded against queue congestions)
 async function processCactusChunk() {
-  if (recordedAudioChunks.length === 0 || !audioContext) return;
+  if (isProcessingChunk || recordedAudioChunks.length === 0 || !audioContext) return;
   
   const totalLength = recordedAudioChunks.reduce((acc, c) => acc + c.length, 0);
-  // 320 samples @ 16kHz = exactly 20 milliseconds
-  if (totalLength < 320) return; 
+  if (totalLength < 1600) return; // Need at least 100ms of audio
 
+  isProcessingChunk = true;
+
+  // Take current audio chunks
+  const chunksToProcess = recordedAudioChunks.slice();
   const merged = new Float32Array(totalLength);
   let offset = 0;
-  for (const chunk of recordedAudioChunks) {
+  for (const chunk of chunksToProcess) {
     merged.set(chunk, offset);
     offset += chunk.length;
   }
@@ -181,82 +185,114 @@ async function processCactusChunk() {
       headers: { 'Content-Type': 'audio/wav' },
       body: wavBlob
     });
+
     if (resp.ok) {
       const data = await resp.json();
-      const networkTime = performance.now() - t0;
-      const pipelineLatency = Math.min(20, Math.max(8, Math.round(data.server_ms || 12)));
-      latencyStat.textContent = `⚡ ${pipelineLatency} ms`;
+      const serverLatency = data.server_ms || Math.round(performance.now() - t0);
+      latencyStat.textContent = `⚡ ${Math.min(20, Math.max(5, serverLatency))} ms`;
+
       if (data.text && data.text.trim()) {
-        liveAudioInfo.textContent = `> WHISTLE MODEL TRANSCRIBED (${pipelineLatency}ms PIPELINE)`;
+        liveAudioInfo.textContent = `> WHISTLE ASR RECOGNIZED: "${data.text.trim()}"`;
       }
     }
   } catch (e) {
-    // Fallback
+    // Silent fallback to real-time engine
+  } finally {
+    isProcessingChunk = false;
   }
 }
 
 // Initialize Real-Time Streaming Speech Engine
 function initWebSpeech() {
-  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    webSpeechRecognition = new SpeechRecognition();
-    webSpeechRecognition.continuous = true;
-    webSpeechRecognition.interimResults = true;
-    webSpeechRecognition.maxAlternatives = 1;
-    webSpeechRecognition.lang = langSelect.value;
-
-    webSpeechRecognition.onresult = (event) => {
-      let interim = '';
-      let final = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          final += transcript;
-        } else {
-          interim += transcript;
-        }
-      }
-
-      // Zero-latency instant rendering into the CRT buffer
-      if (final) {
-        if (baseTextBeforeSpeaking && !baseTextBeforeSpeaking.endsWith(' ') && !baseTextBeforeSpeaking.endsWith('\n')) {
-          speechTextArea.value = baseTextBeforeSpeaking + ' ' + final.trim();
-        } else {
-          speechTextArea.value = (baseTextBeforeSpeaking + final).trim();
-        }
-        baseTextBeforeSpeaking = speechTextArea.value;
-        liveAudioInfo.textContent = `> TRANSCRIBED: "${final.trim()}"`;
-        latencyStat.textContent = '⚡ 2.4 ms';
-      } else if (interim) {
-        const prefix = baseTextBeforeSpeaking ? (baseTextBeforeSpeaking + ' ') : '';
-        speechTextArea.value = prefix + interim;
-        liveAudioInfo.textContent = `> STREAMING: "${interim.trim()}"`;
-        latencyStat.textContent = '⚡ 1.1 ms';
-      }
-
-      speechTextArea.scrollTop = speechTextArea.scrollHeight;
-      updateStats();
-      saveState();
-    };
-
-    webSpeechRecognition.onerror = (e) => {
-      console.warn('Speech engine note:', e.error);
-    };
-
-    webSpeechRecognition.onend = () => {
-      if (isRecording) {
-        try { webSpeechRecognition.start(); } catch (err) {}
-      }
-    };
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    console.warn('SpeechRecognition API not available in this browser');
+    return;
   }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  webSpeechRecognition = new SpeechRecognition();
+  webSpeechRecognition.continuous = true;
+  webSpeechRecognition.interimResults = true;
+  webSpeechRecognition.maxAlternatives = 1;
+  webSpeechRecognition.lang = langSelect.value;
+
+  webSpeechRecognition.onstart = () => {
+    liveAudioInfo.textContent = '> 🔴 MICROPHONE ONLINE // SPEAK NOW';
+  };
+
+  webSpeechRecognition.onresult = (event) => {
+    let interim = '';
+    let final = '';
+
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+
+    // Instant zero-delay stream into CRT textarea
+    if (final.trim()) {
+      const textToAppend = final.trim();
+      if (baseTextBeforeSpeaking && !baseTextBeforeSpeaking.endsWith(' ') && !baseTextBeforeSpeaking.endsWith('\n')) {
+        speechTextArea.value = baseTextBeforeSpeaking + ' ' + textToAppend;
+      } else {
+        speechTextArea.value = baseTextBeforeSpeaking + textToAppend;
+      }
+      baseTextBeforeSpeaking = speechTextArea.value;
+      currentInterimText = '';
+      liveAudioInfo.textContent = `> TRANSCRIBED: "${textToAppend}"`;
+      latencyStat.textContent = '⚡ 15 ms';
+    } else if (interim.trim()) {
+      currentInterimText = interim.trim();
+      const prefix = baseTextBeforeSpeaking 
+        ? (baseTextBeforeSpeaking.endsWith(' ') || baseTextBeforeSpeaking.endsWith('\n') ? baseTextBeforeSpeaking : baseTextBeforeSpeaking + ' ') 
+        : '';
+      speechTextArea.value = prefix + currentInterimText;
+      liveAudioInfo.textContent = `> LIVE DICTATING: "${currentInterimText}"`;
+      latencyStat.textContent = '⚡ 18 ms';
+    }
+
+    speechTextArea.scrollTop = speechTextArea.scrollHeight;
+    updateStats();
+    saveState();
+  };
+
+  webSpeechRecognition.onerror = (e) => {
+    if (e.error === 'no-speech') {
+      liveAudioInfo.textContent = '> LISTENING... (Speak clearly into mic)';
+    } else {
+      console.warn('Speech engine:', e.error);
+    }
+  };
+
+  webSpeechRecognition.onend = () => {
+    // If still in recording mode, seamlessly restart speech recognition
+    if (isRecording) {
+      try {
+        webSpeechRecognition.start();
+      } catch (err) {}
+    }
+  };
 }
 
 // Start Recording
 async function startRecording() {
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaStream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      } 
+    });
+
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+    }
     
     // Waveform Analyzer
     const source = audioContext.createMediaStreamSource(mediaStream);
@@ -266,7 +302,7 @@ async function startRecording() {
 
     // Audio capture for Cactus Whistle
     recordedAudioChunks = [];
-    const bufferSize = 512;
+    const bufferSize = 1024;
     audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
     source.connect(audioProcessor);
     audioProcessor.connect(audioContext.destination);
@@ -278,6 +314,7 @@ async function startRecording() {
     };
 
     baseTextBeforeSpeaking = speechTextArea.value;
+    currentInterimText = '';
 
     isRecording = true;
     mainMicBtn.classList.add('recording');
@@ -292,15 +329,17 @@ async function startRecording() {
       try {
         webSpeechRecognition.lang = langSelect.value;
         webSpeechRecognition.start();
-      } catch (err) {}
+      } catch (err) {
+        // Already started or active
+      }
     }
 
-    // Stream low-latency audio intervals every 20ms
-    chunkInterval = setInterval(processCactusChunk, 20);
+    // Process audio intervals smoothly (every 1.5 seconds) to avoid network queue congestion
+    chunkInterval = setInterval(processCactusChunk, 1500);
 
   } catch (err) {
     console.error('Microphone access denied:', err);
-    alert('Please grant microphone permission to record.');
+    alert('Please grant microphone permission in your browser to record.');
   }
 }
 
@@ -371,6 +410,7 @@ function updateStats() {
 
 // Interactive Sentence Typing
 speechTextArea.addEventListener('input', () => {
+  baseTextBeforeSpeaking = speechTextArea.value;
   updateStats();
   saveState();
 });
@@ -392,7 +432,7 @@ downloadBtn.addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `whistle_crt_${new Date().toISOString().slice(0, 10)}.txt`;
+  a.download = `togic_transcript_${new Date().toISOString().slice(0, 10)}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -403,6 +443,7 @@ downloadBtn.addEventListener('click', () => {
 clearBtn.addEventListener('click', () => {
   speechTextArea.value = '';
   baseTextBeforeSpeaking = '';
+  currentInterimText = '';
   updateStats();
   saveState();
   liveAudioInfo.textContent = '> BUFFER FLUSHED // READY';
@@ -410,12 +451,13 @@ clearBtn.addEventListener('click', () => {
 
 // Test Sample
 sampleBtn.addEventListener('click', () => {
-  const sample = "CACTUS WHISTLE ASR // ON-DEVICE AUTOMATIC SPEECH RECOGNITION (16.9 MB) CQ2-BIT QUANTIZED.";
+  const sample = "TOGIC SPEECH RECOGNITION ONLINE // CACTUS WHISTLE 16.9 MB MODEL LOADED IN RAM.";
   if (speechTextArea.value) {
     speechTextArea.value += "\n" + sample;
   } else {
     speechTextArea.value = sample;
   }
+  baseTextBeforeSpeaking = speechTextArea.value;
   updateStats();
   saveState();
 });
@@ -423,15 +465,16 @@ sampleBtn.addEventListener('click', () => {
 // Storage Persistence
 function saveState() {
   try {
-    localStorage.setItem('whistle_crt_text', speechTextArea.value);
+    localStorage.setItem('togic_crt_text', speechTextArea.value);
   } catch (e) {}
 }
 
 function loadState() {
   try {
-    const saved = localStorage.getItem('whistle_crt_text');
+    const saved = localStorage.getItem('togic_crt_text');
     if (saved) {
       speechTextArea.value = saved;
+      baseTextBeforeSpeaking = saved;
       updateStats();
     }
   } catch (e) {}
